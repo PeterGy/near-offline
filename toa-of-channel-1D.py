@@ -17,7 +17,7 @@ for t in allData : #for timestamp in allData
         if realChannel != None: hist.Fill(realChannel,t.toa)
 
 #makes the histograms
-c = r.TCanvas('','The canvas of anything', 2000, 1000)
+c = r.TCanvas('','', 2000, 1000)
 hist.SetYTitle('TOA sum (of timestamps)')
 hist.SetXTitle('Channel (only real ones)')
 hist.SetMinimum(0)
