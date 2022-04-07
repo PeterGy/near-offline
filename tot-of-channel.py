@@ -1,8 +1,3 @@
-#How to use:
-
-
-#A program that plots the tot sum for each channel
-
 from mapping import *
 #keeps only events we are interested in
 eventsOfInterest = range(4,7)
