@@ -9,7 +9,7 @@ r.gStyle.SetOptStat("ne")
 allData=inputFile.Get('ntuplizehgcroc').Get("hgcroc") 
 
 #Determines number fo timestamps automatically. It's slow. Set it yourself if you want it quickly.
-NumberOfTimestamps = max([t.i_sample for t in allData]) 
+NumberOfTimestamps = max([t.i_sample for t in allData])+1 
 print('This file has', NumberOfTimestamps,'timestamps')
 
 hist=r.TH1F('', "ADC sum", NumberOfTimestamps, 0, NumberOfTimestamps)
