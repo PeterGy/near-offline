@@ -14,7 +14,7 @@ channelsOfInterest = range(0,40)
 inputFile=r.TFile(sys.argv[1], "read")
 NumberOfChannels=384
 r.gStyle.SetOptStat("ne")
-hists =   [r.TH1F(str(channel), "Pulse shape for SiPM",256, 0, 256) for channel in range(0,NumberOfChannels)]
+hists =   [r.TH1F(str(channel), "ADC counts",256, 0, 256) for channel in range(0,NumberOfChannels)]
 allData=inputFile.Get('ntuplizehgcroc').Get("hgcroc") #
 
 #Gets data from interesting events
