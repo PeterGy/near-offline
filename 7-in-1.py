@@ -145,7 +145,6 @@ c.SaveAs("plots/7-in-1.pdf")
 
 #makes the root histos
 for hist in hists:
-    # print(hist)
     file = r.TFile("plots/"+hists[hist].GetName()+".root", "RECREATE")
     hists[hist].SetDirectory(file)
     hists[hist].Write()
