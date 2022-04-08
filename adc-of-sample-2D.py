@@ -8,10 +8,17 @@ inputFile=r.TFile(sys.argv[1], "read")
 r.gStyle.SetOptStat("ne")
 allData=inputFile.Get('ntuplizehgcroc').Get("hgcroc") 
 
+def getNumberOfTimestamps(allData):
+        samples=[]
+        sample_sample=40 #the number of timestamps it looks at before it decides the range
+        for t in allData:
+                samples.append(t.i_sample)
+                sample_sample+=1
+                if len(samples)>sample_sample: break
+        return  1+max(samples)-min(samples)
 
 NumberOfADCs = 1024 
-#Determines number fo timestamps automatically. It's slow. Set it yourself if you want it quickly.
-NumberOfTimestamps = max([t.i_sample for t in allData])+1 
+NumberOfTimestamps = getNumberOfTimestamps(allData)
 print('This file has', NumberOfTimestamps,'timestamps')
 
 hist =  r.TH2F('', "ADC of sample", 
