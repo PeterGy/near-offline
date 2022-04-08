@@ -1,6 +1,5 @@
-#usage: ldmx python3 7-in-1.py ../adc_<run-number>.root
-#HCal-dqm-offline.py
-#data quality monitoring
+#usage: ldmx python3 HCal-dqm-offline.py ../adc_<run-number>.root
+#dqm = data quality monitoring
 
 from mapping import *
 from optparse import OptionParser
