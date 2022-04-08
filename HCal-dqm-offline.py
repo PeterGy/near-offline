@@ -51,7 +51,6 @@ threshold = adc_ped + mV_per_PE / adc_gain * threshold_PE
 print('threshold is an ADC of',threshold)
 def ADC_to_PE(adc): return adc*adc_gain/mV_per_PE 
 
-
 #prepares plots
 hists = {}
 
@@ -127,7 +126,6 @@ for t in allData : #for timestamp in allData
                 maxADC=0
                 maxSample=-1
             
-
 #makes the pdf
 c = r.TCanvas('','', 300, 300)
 c.Divide(3,3)
@@ -150,8 +148,6 @@ c.cd(8)
 hists["max_sample-of-channel"].Draw('COLZ')
 
 for i in range(1,10):c.GetPad(i).SetLeftMargin(0.12)
-
-
 label = r.TLatex()
 label.SetTextFont(42)
 label.SetTextSize(0.05)
