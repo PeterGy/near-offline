@@ -149,6 +149,8 @@ if includeThresholdPlots == True:
 c.cd(8)
 hists["max_sample-of-channel"].Draw('COLZ')
 
+for i in range(1,10):c.GetPad(i).SetLeftMargin(0.12)
+
 
 label = r.TLatex()
 label.SetTextFont(42)
