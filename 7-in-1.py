@@ -1,21 +1,20 @@
 from mapping import *
-
 from optparse import OptionParser
  
-
 parser = OptionParser()	
 parser.add_option('-t','--threshold', dest='includeThresholdPlots', default = True, help='Determines if PE threshold plots should be included. Leave blank or True to inlcude, anything else ot exclude.')
 options = parser.parse_args()[0]
-
+includeThresholdPlots=options.includeThresholdPlots
 
 #keeps only events we are interested in
 eventsOfInterest = range(0,100)
 channelsOfInterest = range(0,40)
-includeThresholdPlots=options.includeThresholdPlots
 
-# print(includeThresholdPlots)
+inputFile=r.TFile(sys.argv[1], "read")
+allData=inputFile.Get('ntuplizehgcroc').Get("hgcroc") #
+r.gStyle.SetOptStat("ne")
 
-
+#defines boundaries
 def getTimestampRange(allData):
     samples=[]
     sample_sample=40 #the number of timestamps it looks at before it decides the range
@@ -24,17 +23,7 @@ def getTimestampRange(allData):
         sample_sample+=1
         if len(samples)>sample_sample: break
     return  range(min(samples),max(samples)+1)
-
-
-
-inputFile=r.TFile(sys.argv[1], "read")
-allData=inputFile.Get('ntuplizehgcroc').Get("hgcroc") #
-r.gStyle.SetOptStat("ne")
-
-#defines boundaries
 timestampRange=getTimestampRange(allData)
-print('The range of timestamps is',timestampRange)
-print('The largest timestamp is',timestampRange[-1])
 print('The number of timestamps is',len(timestampRange))
 channelRange=range(0,384)
 ADCRange=range(0,1024)
@@ -42,7 +31,7 @@ TOTRange=range(0,1024)
 TOARange=range(0,1024)
 PERange=range(0,30)
 
-
+#sets the threshold
 threshold_PE = 5. #aribtrary for now
 energy_per_mip = 4.66 #MeV/MIP
 voltage_hcal = 5. #mV/PE
@@ -99,9 +88,10 @@ hists["PE-of-channel"].SetYTitle('PE')
 hists["PE-of-channel"].SetXTitle('Channel')  
 
 
+
+#Gets data from interesting events
 maxADC=0
 maxSample=-1
-#Gets data from interesting events
 for t in allData : #for timestamp in allData
     if t.event in eventsOfInterest:
         realChannel = FpgaLinkChannel_to_realChannel([t.fpga,t.link,t.channel])
@@ -125,13 +115,9 @@ for t in allData : #for timestamp in allData
                 maxSample=-1
             
 
-#makes the histograms
-
-
-
+#makes the pdf
 c = r.TCanvas('','', 300, 300)
 c.Divide(3,3)
-
 c.cd(1)
 hists["ADC-of-channel"].Draw('COLZ')
 c.cd(2)
@@ -142,25 +128,11 @@ c.cd(4)
 hists["ADC-of-sample"].Draw('COLZ')
 c.cd(5)
 hists["event-of-max_sample"].Draw('HIST')
-
-# print(bool(includeThresholdPlots))
 if includeThresholdPlots == True:
     c.cd(6)
     hists["event-of-PE"].Draw('HIST')
     c.cd(7)
     hists["PE-of-channel"].Draw('COLZ')
-
-
-
-
-
-
-
-
-
-
-
-
 
 label = r.TLatex()
 label.SetTextFont(42)
@@ -169,10 +141,9 @@ label.SetNDC()
 if len(eventsOfInterest) == 1: context= "This is only event "+str(eventsOfInterest[0])
 else: context="These are events "+str(eventsOfInterest[0])+" to "+str(eventsOfInterest[-1]) 
 label.DrawLatex(0,  0, context)  
-
 c.SaveAs("plots/7-in-1.pdf") 
 
-
+#makes the root histos
 for hist in hists:
     # print(hist)
     file = r.TFile("plots/"+hists[hist].GetName()+".root", "RECREATE")
