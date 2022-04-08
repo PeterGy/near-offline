@@ -22,12 +22,26 @@ r.gStyle.SetOptStat("ne")
 #defines boundaries
 timestampRange=getTimestampRange(allData)
 print('The range of timestamps is',timestampRange)
-print('The range of timestamps is',timestampRange[-1])
-print('The range of timestamps is',len(timestampRange))
+print('The largest timestamp is',timestampRange[-1])
+print('The number of timestamps is',len(timestampRange))
 channelRange=range(0,384)
 ADCRange=range(0,1024)
 TOTRange=range(0,1024)
 TOARange=range(0,1024)
+PERange=range(0,30)
+
+
+threshold_PE = 5. #aribtrary for now
+energy_per_mip = 4.66 #MeV/MIP
+voltage_hcal = 5. #mV/PE
+PE_per_mip = 68. #PEs/mip
+mV_per_PE = 1/energy_per_mip * voltage_hcal * PE_per_mip #mV per MIP is about 73 for now
+adc_ped = 1. #Dummy Value
+adc_gain = 1.2 #Dummy Value
+threshold = adc_ped + mV_per_PE / adc_gain * threshold_PE
+print('threshold is an ADC of',threshold)
+def ADC_to_PE(adc): return adc*adc_gain/mV_per_PE 
+
 
 #prepares plots
 hists = {}
@@ -61,7 +75,16 @@ hists["event-of-max_sample"] =  r.TH1F("event-of-max_sample", "event-of-max_samp
 hists["event-of-max_sample"].SetYTitle('Event count')
 hists["event-of-max_sample"].SetXTitle('Sample')  
 
+hists["event-of-PE"] =  r.TH1F("event-of-PE", "event-of-PE", 
+        len(PERange), PERange[0]-0.5, PERange[-1]+0.5,)
+hists["event-of-PE"].SetYTitle('Event count')
+hists["event-of-PE"].SetXTitle('PE')  
 
+hists["PE-of-channel"] =  r.TH2F("PE-of-channel", "PE-of-channel", 
+        len(channelRange), channelRange[0]-0.5, channelRange[-1]-0.5,
+        len(PERange), PERange[0]-0.5, PERange[-1]+0.5,)
+hists["PE-of-channel"].SetYTitle('PE')
+hists["PE-of-channel"].SetXTitle('Channel')  
 
 
 maxADC=0
@@ -71,8 +94,7 @@ for t in allData : #for timestamp in allData
     if t.event in eventsOfInterest:
         realChannel = FpgaLinkChannel_to_realChannel([t.fpga,t.link,t.channel])
         if realChannel != None: 
-            
-            
+   
             hists["ADC-of-channel"].Fill(realChannel,t.adc)
             hists["TOT-of-channel"].Fill(realChannel,t.tot)
             hists["TOA-of-channel"].Fill(realChannel,t.toa)
@@ -82,8 +104,11 @@ for t in allData : #for timestamp in allData
                 maxADC=t.adc
                 maxSample=t.i_sample
             if t.i_sample == timestampRange[-1]: 
-                if maxADC>0: #future option for a threshold
+                if maxADC>0: #future option for non-PE related threshold
                     hists["event-of-max_sample"].Fill(maxSample)
+                if maxADC>threshold:   
+                    hists["event-of-PE"].Fill(ADC_to_PE(maxADC))
+                    hists["PE-of-channel"].Fill(realChannel,ADC_to_PE(maxADC))
                 maxADC=0
                 maxSample=-1
             
@@ -105,6 +130,10 @@ c.cd(4)
 hists["ADC-of-sample"].Draw('COLZ')
 c.cd(5)
 hists["event-of-max_sample"].Draw('HIST')
+c.cd(6)
+hists["event-of-PE"].Draw('HIST')
+c.cd(7)
+hists["PE-of-channel"].Draw('COLZ')
 # file = r.TFile("plots/"+hists["ADC-of-channel"].GetName()+".root", "RECREATE")
 # hists["ADC-of-channel"].SetDirectory(file)
 # hists["ADC-of-channel"].Write()
