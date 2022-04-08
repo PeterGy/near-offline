@@ -1,7 +1,14 @@
 #usage: ldmx python3 7-in-1.py ../adc_<run-number>.root
+#HCal-dqm-offline.py
+#data quality monitoring
 
 from mapping import *
 from optparse import OptionParser
+import os
+
+directory = 'plots'
+try: os.stat(directory)
+except: os.mkdir(directory)
  
 parser = OptionParser()	
 parser.add_option('-t','--threshold', dest='includeThresholdPlots', default = True, help='Determines if PE threshold plots should be included. Leave blank or True to inlcude, anything else ot exclude.')
