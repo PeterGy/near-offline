@@ -89,7 +89,11 @@ hists["PE-of-channel"] =  r.TH2F("PE-of-channel", "PE-of-channel",
 hists["PE-of-channel"].SetYTitle('PE')
 hists["PE-of-channel"].SetXTitle('Channel')  
 
-
+hists["max_sample-of-channel"] =  r.TH2F("max_sample-of-channel", "max_sample-of-channel", 
+        len(channelRange), channelRange[0]-0.5, channelRange[-1]-0.5,
+        len(timestampRange), timestampRange[0]-0.5, timestampRange[-1]+0.5,)
+hists["max_sample-of-channel"].SetYTitle('PE')
+hists["max_sample-of-channel"].SetXTitle('Channel') 
 
 #Gets data from interesting events
 maxADC=0
@@ -110,6 +114,7 @@ for t in allData : #for timestamp in allData
             if t.i_sample == timestampRange[-1]: 
                 if maxADC>0: #future option for non-PE related threshold
                     hists["event-of-max_sample"].Fill(maxSample)
+                    hists["max_sample-of-channel"].Fill(realChannel,maxSample)
                 if maxADC>threshold:   
                     hists["event-of-PE"].Fill(ADC_to_PE(maxADC))
                     hists["PE-of-channel"].Fill(realChannel,ADC_to_PE(maxADC))
@@ -135,6 +140,9 @@ if includeThresholdPlots == True:
     hists["event-of-PE"].Draw('HIST')
     c.cd(7)
     hists["PE-of-channel"].Draw('COLZ')
+c.cd(8)
+hists["max_sample-of-channel"].Draw('COLZ')
+
 
 label = r.TLatex()
 label.SetTextFont(42)
@@ -143,7 +151,7 @@ label.SetNDC()
 if len(eventsOfInterest) == 1: context= "This is only event "+str(eventsOfInterest[0])
 else: context="These are events "+str(eventsOfInterest[0])+" to "+str(eventsOfInterest[-1]) 
 label.DrawLatex(0,  0, context)  
-c.SaveAs("plots/7-in-1.pdf") 
+c.SaveAs("plots/all-in-1.pdf") 
 
 #makes the root histos
 for hist in hists:
