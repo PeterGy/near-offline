@@ -1,3 +1,5 @@
+#usage: ldmx python3 7-in-1.py ../adc_<run-number>.root
+
 from mapping import *
 from optparse import OptionParser
  
