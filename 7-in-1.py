@@ -1,7 +1,19 @@
 from mapping import *
+
+from optparse import OptionParser
+ 
+
+parser = OptionParser()	
+parser.add_option('-t','--threshold', dest='includeThresholdPlots', default = True, help='Determines if PE threshold plots should be included. Leave blank or True to inlcude, anything else ot exclude.')
+options = parser.parse_args()[0]
+
+
 #keeps only events we are interested in
 eventsOfInterest = range(0,100)
 channelsOfInterest = range(0,40)
+includeThresholdPlots=options.includeThresholdPlots
+
+# print(includeThresholdPlots)
 
 
 def getTimestampRange(allData):
@@ -130,14 +142,14 @@ c.cd(4)
 hists["ADC-of-sample"].Draw('COLZ')
 c.cd(5)
 hists["event-of-max_sample"].Draw('HIST')
-c.cd(6)
-hists["event-of-PE"].Draw('HIST')
-c.cd(7)
-hists["PE-of-channel"].Draw('COLZ')
-# file = r.TFile("plots/"+hists["ADC-of-channel"].GetName()+".root", "RECREATE")
-# hists["ADC-of-channel"].SetDirectory(file)
-# hists["ADC-of-channel"].Write()
-# file.Close()
+
+# print(bool(includeThresholdPlots))
+if includeThresholdPlots == True:
+    c.cd(6)
+    hists["event-of-PE"].Draw('HIST')
+    c.cd(7)
+    hists["PE-of-channel"].Draw('COLZ')
+
 
 
 
@@ -159,3 +171,11 @@ else: context="These are events "+str(eventsOfInterest[0])+" to "+str(eventsOfIn
 label.DrawLatex(0,  0, context)  
 
 c.SaveAs("plots/7-in-1.pdf") 
+
+
+for hist in hists:
+    # print(hist)
+    file = r.TFile("plots/"+hists[hist].GetName()+".root", "RECREATE")
+    hists[hist].SetDirectory(file)
+    hists[hist].Write()
+    file.Close()
