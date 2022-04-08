@@ -8,7 +8,7 @@ inputFile=r.TFile(sys.argv[1], "read")
 NumberOfChannels=384
 NumberOfADCs=1024
 r.gStyle.SetOptStat("ne")
-hist =  r.TH2F('', "ADC sum", NumberOfChannels, 0, NumberOfChannels,
+hist =  r.TH2F('', "ADC of channel", NumberOfChannels, 0, NumberOfChannels,
         NumberOfADCs, 0, NumberOfADCs,)
 allData=inputFile.Get('ntuplizehgcroc').Get("hgcroc") #
 
