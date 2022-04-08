@@ -98,7 +98,7 @@ hists["PE-of-channel"].SetXTitle('Channel')
 hists["max_sample-of-channel"] =  r.TH2F("max_sample-of-channel", "max_sample-of-channel", 
         len(channelRange), channelRange[0]-0.5, channelRange[-1]-0.5,
         len(timestampRange), timestampRange[0]-0.5, timestampRange[-1]+0.5,)
-hists["max_sample-of-channel"].SetYTitle('PE')
+hists["max_sample-of-channel"].SetYTitle('Timestamp')
 hists["max_sample-of-channel"].SetXTitle('Channel') 
 
 #Gets data from interesting events
