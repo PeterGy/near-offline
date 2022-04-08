@@ -157,7 +157,7 @@ label.SetNDC()
 if len(eventsOfInterest) == 1: context= "This is only event "+str(eventsOfInterest[0])
 else: context="These are events "+str(eventsOfInterest[0])+" to "+str(eventsOfInterest[-1]) 
 label.DrawLatex(0,  0, context)  
-c.SaveAs("plots/all-in-1.pdf") 
+c.SaveAs("plots/Hcal-dqm.pdf") 
 
 #makes the root histos
 for hist in hists:
