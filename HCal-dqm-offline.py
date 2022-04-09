@@ -4,6 +4,12 @@
 from mapping import *
 from optparse import OptionParser
 import os
+import csv
+
+# csvFile=open()
+ReconConditionsFileLocation='DumbReconConditions.csv'
+csv_reader = csv.reader(open(ReconConditionsFileLocation), delimiter=',')
+print(csv_reader)
 
 directory = 'plots'
 try: os.stat(directory)
@@ -47,10 +53,34 @@ voltage_hcal = 5. #mV/PE
 PE_per_mip = 68. #PEs/mip
 mV_per_PE = 1/energy_per_mip * voltage_hcal * PE_per_mip #mV per MIP is about 73 for now
 adc_ped = 1. #Dummy Value
-adc_gain = 1.2 #Dummy Value
-threshold = adc_ped + mV_per_PE / adc_gain * threshold_PE
-print('threshold is an ADC of',threshold)
+# adc_gain = 1.2 #Dummy Value
+# threshold = adc_ped + mV_per_PE / adc_gain * threshold_PE
+# print('threshold is an ADC of',threshold)
 def ADC_to_PE(adc): return adc*adc_gain/mV_per_PE 
+def calculateThreshold(adc_gain): return adc_ped + mV_per_PE / adc_gain * threshold_PE
+
+thresholds=[]
+for row in csv_reader:
+    try:    
+        [fpga,ROC,channel] = row[1].split(':') 
+        # a slightly different format, that shall now be converted
+        fpga = int(fpga)
+        link = int(ROC)*2+int( (int(channel)) /36 ) 
+        channel = int(channel)%36
+
+        # print([int(fpga),int(link),int(channel)])
+        RealChannel = FpgaLinkChannel_to_realChannel([fpga,link,channel])
+        # print(RealChannel,[fpga,link,channel])
+
+    except: RealChannel = None
+    if RealChannel != None: 
+        adc_gain = float(row[3])
+        thresholds.append(calculateThreshold(adc_gain))
+    # print(row[3])
+    #351 is missing...
+    # print(RealChannel)
+
+print(len(thresholds))
 
 #prepares plots
 hists = {}
@@ -121,7 +151,7 @@ for t in allData : #for timestamp in allData
                 if maxADC>0: #future option for non-PE related threshold
                     hists["event-of-max_sample"].Fill(maxSample)
                     hists["max_sample-of-channel"].Fill(realChannel,maxSample)
-                if maxADC>threshold:   
+                if maxADC>thresholds[realChannel]:   
                     hists["event-of-PE"].Fill(ADC_to_PE(maxADC))
                     hists["PE-of-channel"].Fill(realChannel,ADC_to_PE(maxADC))
                 maxADC=0

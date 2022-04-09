@@ -9,14 +9,14 @@ r.gSystem.Load("libFramework.so")
 
 # converts the link-channel provided by the HGCROC into a 'real' channel: goes from 1 to 384, representing a SiPM each
 def FpgaLinkChannel_to_realChannel(FpgaLinkChannel): #link is the chip halves, channel is just the channel
-    channel = FpgaLinkChannel[2]-1
+    channel = FpgaLinkChannel[2]
     if 0 <= channel and channel <= 7:  realChannel = channel
     elif 9 <= channel and channel <= 16:  realChannel = channel-1
-    elif 19 <= channel and channel <= 26:  realChannel = channel-3
-    elif 28 <= channel and channel <= 35:  realChannel = channel-4
+    elif 18 <= channel and channel <= 25:  realChannel = channel-2
+    elif 27 <= channel and channel <= 34:  realChannel = channel-3
     else: return None
     realChannel+=FpgaLinkChannel[1]*32
-    realChannel+=(FpgaLinkChannel[0]-2)*32*6
+    realChannel+=(FpgaLinkChannel[0])*32*6
     return realChannel
 
 #converts the 'real' channel into a 3 vector that describes the SiPM really well
