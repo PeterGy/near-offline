@@ -33,7 +33,7 @@ for t in allData : #for timestamp in allData
         adcSumMap[LayerBarSide[0],LayerBarSide[1]] +=t.adc
 
 
-#fills a r histogram with the sipm averages
+#fills a root histogram with the sipm averages
 adcCountMap[adcCountMap == 0 ] = 1 
 for i in range(40):
     for j in range(12):

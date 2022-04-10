@@ -9,7 +9,6 @@ import csv
 # csvFile=open()
 ReconConditionsFileLocation='DumbReconConditions.csv'
 csv_reader = csv.reader(open(ReconConditionsFileLocation), delimiter=',')
-print(csv_reader)
 
 directory = 'plots'
 try: os.stat(directory)
@@ -21,7 +20,7 @@ options = parser.parse_args()[0]
 includeThresholdPlots=options.includeThresholdPlots
 
 #keeps only events we are interested in
-eventsOfInterest = range(0,100)
+eventsOfInterest = range(4,5)
 channelsOfInterest = range(0,40)
 
 inputFileName=sys.argv[1]
@@ -45,6 +44,10 @@ ADCRange=range(0,1024)
 TOTRange=range(0,1024)
 TOARange=range(0,1024)
 PERange=range(0,30)
+barMapRange=range(1,12)
+layerRange=range(1,41)
+adcCountMap = zeros((40,12))
+adcSumMap = zeros((40,12))
 
 #sets the threshold
 threshold_PE = 5. #aribtrary for now
@@ -67,20 +70,11 @@ for row in csv_reader:
         fpga = int(fpga)
         link = int(ROC)*2+int( (int(channel)) /36 ) 
         channel = int(channel)%36
-
-        # print([int(fpga),int(link),int(channel)])
         RealChannel = FpgaLinkChannel_to_realChannel([fpga,link,channel])
-        # print(RealChannel,[fpga,link,channel])
-
     except: RealChannel = None
     if RealChannel != None: 
         adc_gain = float(row[3])
         thresholds.append(calculateThreshold(adc_gain))
-    # print(row[3])
-    #351 is missing...
-    # print(RealChannel)
-
-print(len(thresholds))
 
 #prepares plots
 hists = {}
@@ -131,6 +125,13 @@ hists["max_sample-of-channel"] =  r.TH2F("max_sample-of-channel", "max_sample-of
 hists["max_sample-of-channel"].SetYTitle('Timestamp')
 hists["max_sample-of-channel"].SetXTitle('Channel') 
 
+hists["map"] =  r.TH2F("map", "map", 
+        len(layerRange), layerRange[0]-0.5, layerRange[-1]+0.5,
+        len(barMapRange), barMapRange[0]-0.5, barMapRange[-1]+0.5,)
+hists["map"].SetYTitle('Bar')
+hists["map"].SetXTitle('Layer') 
+
+
 #Gets data from interesting events
 maxADC=0
 maxSample=-1
@@ -156,7 +157,19 @@ for t in allData : #for timestamp in allData
                     hists["PE-of-channel"].Fill(realChannel,ADC_to_PE(maxADC))
                 maxADC=0
                 maxSample=-1
-            
+
+            #fills the map
+            LayerBarSide = realChannel_to_SipM_fast[realChannel].copy() #the copy is what makes the fast not so fast
+            if LayerBarSide[2]==1: LayerBarSide[0] +=20
+            adcCountMap[LayerBarSide[0],LayerBarSide[1]] +=1 
+            adcSumMap[LayerBarSide[0],LayerBarSide[1]] +=t.adc    
+
+adcCountMap[adcCountMap == 0 ] = 1 
+for i in range(40):
+    for j in range(12):
+        hists["map"].Fill(i,j,adcSumMap[i,j]/adcCountMap[i,j])     
+
+
 #makes the overview pdf
 c = r.TCanvas('','', 300, 300)
 c.Divide(3,3)
@@ -177,8 +190,11 @@ if includeThresholdPlots == True:
     hists["PE-of-channel"].Draw('COLZ')
 c.cd(8)
 hists["max_sample-of-channel"].Draw('COLZ')
+c.cd(9)
+hists["map"].Draw('COLZ')
 
 for i in range(1,10):c.GetPad(i).SetLeftMargin(0.12)
+c.cd(0)
 label = r.TLatex()
 label.SetTextFont(42)
 label.SetTextSize(0.05)
