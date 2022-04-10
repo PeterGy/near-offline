@@ -20,7 +20,7 @@ options = parser.parse_args()[0]
 includeThresholdPlots=options.includeThresholdPlots
 
 #keeps only events we are interested in
-eventsOfInterest = range(4,5)
+eventsOfInterest = range(0,100)
 channelsOfInterest = range(0,40)
 
 inputFileName=sys.argv[1]
@@ -105,12 +105,12 @@ hists["ADC-of-sample"].SetXTitle('Sample')
 
 hists["event-of-max_sample"] =  r.TH1F("event-of-max_sample", "event-of-max_sample", 
         len(timestampRange), timestampRange[0]-0.5, timestampRange[-1]+0.5,)
-hists["event-of-max_sample"].SetYTitle('Event count')
+hists["event-of-max_sample"].SetYTitle('Individual SiPM event count')
 hists["event-of-max_sample"].SetXTitle('Sample')  
 
 hists["event-of-PE"] =  r.TH1F("event-of-PE", "event-of-PE", 
         len(PERange), PERange[0]-0.5, PERange[-1]+0.5,)
-hists["event-of-PE"].SetYTitle('Event count')
+hists["event-of-PE"].SetYTitle('Individual SiPM event count')
 hists["event-of-PE"].SetXTitle('PE')  
 
 hists["PE-of-channel"] =  r.TH2F("PE-of-channel", "PE-of-channel", 
@@ -125,7 +125,7 @@ hists["max_sample-of-channel"] =  r.TH2F("max_sample-of-channel", "max_sample-of
 hists["max_sample-of-channel"].SetYTitle('Timestamp')
 hists["max_sample-of-channel"].SetXTitle('Channel') 
 
-hists["map"] =  r.TH2F("map", "map", 
+hists["map"] =  r.TH2F("map", "Map of average ADCs", 
         len(layerRange), layerRange[0]-0.5, layerRange[-1]+0.5,
         len(barMapRange), barMapRange[0]-0.5, barMapRange[-1]+0.5,)
 hists["map"].SetYTitle('Bar')
