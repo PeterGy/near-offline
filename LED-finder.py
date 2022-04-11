@@ -1,8 +1,17 @@
-#usage: ldmx python3 pedestal-finder.py pedestal_run.root
+#usage: ldmx python3 LED-finder.py LED_run.root pedestals.csv
 
 from mapping import *
 import csv
 import ROOT as r
+
+pedestalFileName=sys.argv[2]
+csv_reader = csv.reader(open(pedestalFileName), delimiter=',')
+
+pedestals ={}
+for row in csv_reader:
+    pedestals[int(row[0])] = float(row[2])
+# print(pedestals)
+
 
 inputFileName=sys.argv[1]
 inputFile=r.TFile(inputFileName, "read")
@@ -19,14 +28,16 @@ for t in allData : #for timestamp in allData
         IDpositions[t.raw_id] = str(polarfire)+':'+str(hrocindex)+':'+str(channel)
     hists[t.raw_id].Fill(t.adc)
 
-csvfile = open('pedestals.csv', 'w', newline='')
+csvfile = open('LEDs.csv', 'w', newline='')
 csvwriter = csv.writer(csvfile, delimiter=',')
 
 for i in hists: 
     # fit = hists[i].Fit('gaus','Sq') #so fits are awful
     # μ = fit.Parameter(1)
-    μ = hists[i].GetMean()
-    csvwriter.writerow([i, IDpositions[i], μ])
+    μ = hists[i].GetMean()-pedestals[i]
+    # print(i)
+    # print(type(i))
+    csvwriter.writerow([i, IDpositions[i], pedestals[i], μ])
 
         
 
