@@ -13,6 +13,13 @@ csv_reader = csv.reader(open(ReconConditionsFileLocation), delimiter=',')
 directory = 'plots'
 try: os.stat(directory)
 except: os.mkdir(directory)
+
+def addLabel():
+    label = r.TLatex()
+    label.SetTextFont(42)
+    label.SetTextSize(0.025)
+    label.SetNDC()
+    return label
  
 parser = OptionParser()	
 parser.add_option('-t','--threshold', dest='includeThresholdPlots', default = True, help='Determines if PE threshold plots should be included. Leave blank or True to inlcude, anything else ot exclude.')
@@ -44,8 +51,9 @@ ADCRange=range(0,1024)
 TOTRange=range(0,1024)
 TOARange=range(0,1024)
 PERange=range(0,30)
-barMapRange=range(1,12)
+barMapRange=range(1,13)
 layerRange=range(1,41)
+thresholdCountMap = zeros((40,12))
 adcCountMap = zeros((40,12))
 adcSumMap = zeros((40,12))
 
@@ -103,14 +111,14 @@ hists["ADC-of-sample"] =  r.TH2F("ADC-of-sample", "ADC-of-sample",
 hists["ADC-of-sample"].SetYTitle('ADC')
 hists["ADC-of-sample"].SetXTitle('Sample')  
 
-hists["event-of-max_sample"] =  r.TH1F("event-of-max_sample", "event-of-max_sample", 
+hists["event-of-max_sample"] =  r.TH1F("event-of-max_sample", "# of times x sample had the highest ADC", 
         len(timestampRange), timestampRange[0]-0.5, timestampRange[-1]+0.5,)
-hists["event-of-max_sample"].SetYTitle('Individual SiPM event count')
+hists["event-of-max_sample"].SetYTitle('# of SiPMs')
 hists["event-of-max_sample"].SetXTitle('Sample')  
 
-hists["event-of-PE"] =  r.TH1F("event-of-PE", "event-of-PE", 
+hists["event-of-PE"] =  r.TH1F("event-of-PE", "# of times a SiPM got x # of PEs", 
         len(PERange), PERange[0]-0.5, PERange[-1]+0.5,)
-hists["event-of-PE"].SetYTitle('Individual SiPM event count')
+hists["event-of-PE"].SetYTitle('# of SiPMs')
 hists["event-of-PE"].SetXTitle('PE')  
 
 hists["PE-of-channel"] =  r.TH2F("PE-of-channel", "PE-of-channel", 
@@ -131,6 +139,12 @@ hists["map"] =  r.TH2F("map", "Map of average ADCs",
 hists["map"].SetYTitle('Bar')
 hists["map"].SetXTitle('Layer') 
 
+hists["thresholdMap"] =  r.TH2F("thresholdMap", "Map of threshold exceeding hits", 
+        len(layerRange), layerRange[0]-0.5, layerRange[-1]+0.5,
+        len(barMapRange), barMapRange[0]-0.5, barMapRange[-1]+0.5,)
+hists["thresholdMap"].SetYTitle('Bar')
+hists["thresholdMap"].SetXTitle('Layer') 
+
 
 #Gets data from interesting events
 maxADC=0
@@ -145,6 +159,14 @@ for t in allData : #for timestamp in allData
             hists["TOA-of-channel"].Fill(realChannel,t.toa)
             hists["ADC-of-sample"].Fill(t.i_sample,t.adc)
 
+
+            #fills the map
+            LayerBarSide = realChannel_to_SipM_fast[realChannel].copy() #the copy is what makes the fast not so fast
+            if LayerBarSide[2]==1: LayerBarSide[0] +=20
+            adcCountMap[LayerBarSide[0],LayerBarSide[1]] +=1 
+            adcSumMap[LayerBarSide[0],LayerBarSide[1]] +=t.adc   
+
+
             if maxADC<t.adc: 
                 maxADC=t.adc
                 maxSample=t.i_sample
@@ -155,22 +177,25 @@ for t in allData : #for timestamp in allData
                 if maxADC>thresholds[realChannel]:   
                     hists["event-of-PE"].Fill(ADC_to_PE(maxADC))
                     hists["PE-of-channel"].Fill(realChannel,ADC_to_PE(maxADC))
+                    thresholdCountMap[LayerBarSide[0],LayerBarSide[1]] +=1 
+                    
                 maxADC=0
                 maxSample=-1
 
-            #fills the map
-            LayerBarSide = realChannel_to_SipM_fast[realChannel].copy() #the copy is what makes the fast not so fast
-            if LayerBarSide[2]==1: LayerBarSide[0] +=20
-            adcCountMap[LayerBarSide[0],LayerBarSide[1]] +=1 
-            adcSumMap[LayerBarSide[0],LayerBarSide[1]] +=t.adc    
+ 
 
 adcCountMap[adcCountMap == 0 ] = 1 
 for i in range(40):
     for j in range(12):
-        hists["map"].Fill(i,j,adcSumMap[i,j]/adcCountMap[i,j])     
+        if i in range(0,10) or i in range(20,30): visual_offset=2
+        else:visual_offset=0
+        # print()
+        hists["map"].Fill(i,j+1+visual_offset,adcSumMap[i,j]/adcCountMap[i,j])     
+        hists["thresholdMap"].Fill(i,j+1+visual_offset,thresholdCountMap[i,j])
 
 
-#makes the overview pdf
+#makes pdf
+saveFileName="plots/Hcal-dqm_"+inputFileName[inputFileName.find('adc'):inputFileName.find('.root')]
 c = r.TCanvas('','', 300, 300)
 c.Divide(3,3)
 c.cd(1)
@@ -190,20 +215,31 @@ if includeThresholdPlots == True:
     hists["PE-of-channel"].Draw('COLZ')
 c.cd(8)
 hists["max_sample-of-channel"].Draw('COLZ')
-c.cd(9)
-hists["map"].Draw('COLZ')
+
+
 
 for i in range(1,10):c.GetPad(i).SetLeftMargin(0.12)
 c.cd(0)
-label = r.TLatex()
-label.SetTextFont(42)
-label.SetTextSize(0.05)
-label.SetNDC()  
+label = addLabel() 
 if len(eventsOfInterest) == 1: context= "This is only event "+str(eventsOfInterest[0])
 else: context="These are events "+str(eventsOfInterest[0])+" to "+str(eventsOfInterest[-1]) 
 label.DrawLatex(0,  0, context)  
-saveFileName=inputFileName[inputFileName.find('adc'):inputFileName.find('.root')]
-c.SaveAs("plots/Hcal-dqm_overview_"+saveFileName+".pdf") 
+
+c.Print(saveFileName+".pdf(","Title:Overview page");
+c.Close()
+
+c = r.TCanvas('','', 200, 100)
+c.Divide(2,1)
+
+c.cd(1)
+hists["thresholdMap"].Draw('COLZ')
+c.cd(2)
+hists["map"].Draw('COLZ')
+c.cd(1)
+label = addLabel()
+label.DrawLatex(0,  0.91, "Left side: left and top SiPMs. Right side: right and bottom SiPMs.")
+label.DrawLatex(0,  0.04, "Odd layers: vertical bars; Even layers: horizontal bars")
+c.Print(saveFileName+".pdf(","Title:Mappage");
 c.Close()
 
 #makes individual pdfs
@@ -221,15 +257,16 @@ for hist in plots:
         subplots[-1].GetXaxis().SetRangeUser(i*channelsPerROC, (i+1)*channelsPerROC-1)
         subplots[-1].SetTitle('ROC '+str(i))
         subplots[-1].Draw('COLZ')
-    c.SaveAs("plots/Hcal-dqm_"+hist.GetName()+".pdf") 
+    if hist!= plots[-1]:c.Print(saveFileName+".pdf","Title:ROC breakdown");
+    else:c.Print(saveFileName+".pdf)","Title:ROC breakdown");
     c.Close()
 
 
 
 
 #makes the root histos
-for hist in hists:
-    file = r.TFile("plots/"+hists[hist].GetName()+".root", "RECREATE")
-    hists[hist].SetDirectory(file)
-    hists[hist].Write()
-    file.Close()
+# for hist in hists:
+#     file = r.TFile("plots/"+hists[hist].GetName()+".root", "RECREATE")
+#     hists[hist].SetDirectory(file)
+#     hists[hist].Write()
+#     file.Close()
