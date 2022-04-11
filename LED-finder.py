@@ -9,7 +9,8 @@ csv_reader = csv.reader(open(pedestalFileName), delimiter=',')
 
 pedestals ={}
 for row in csv_reader:
-    pedestals[int(row[0])] = float(row[2])
+    try:  pedestals[int(row[0])] = float(row[2])
+    except:pass
 # print(pedestals)
 
 
@@ -30,6 +31,8 @@ for t in allData : #for timestamp in allData
 
 csvfile = open('LEDs.csv', 'w', newline='')
 csvwriter = csv.writer(csvfile, delimiter=',')
+
+csvwriter.writerow(['DetID', 'ElLoc', 'ADC_PEDESTAL', 'LED_MEDIAN'])
 
 for i in hists: 
     # fit = hists[i].Fit('gaus','Sq') #so fits are awful

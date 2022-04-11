@@ -22,6 +22,7 @@ for t in allData : #for timestamp in allData
 csvfile = open('pedestals.csv', 'w', newline='')
 csvwriter = csv.writer(csvfile, delimiter=',')
 
+csvwriter.writerow(['DetID', 'ElLoc', 'ADC_PEDESTAL'])
 for i in hists: 
     # fit = hists[i].Fit('gaus','Sq') #so fits are awful
     # μ = fit.Parameter(1)
