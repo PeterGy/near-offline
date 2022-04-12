@@ -1,5 +1,4 @@
 __pycache__
 plots
-pedestals.csv
-LEDs.csv
+*.csv
 *.root

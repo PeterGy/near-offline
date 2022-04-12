@@ -3,6 +3,13 @@
 from mapping import *
 import csv
 import ROOT as r
+from optparse import OptionParser
+
+parser = OptionParser()	
+parser.add_option('-o','--outputPath', dest='outputPath', default = '', help='Determines the output folder')
+options = parser.parse_args()[0]
+outputPath = options.outputPath
+if outputPath != '' and outputPath[-1] != '/': outputPath +='/'
 
 pedestalFileName=sys.argv[2]
 csv_reader = csv.reader(open(pedestalFileName), delimiter=',')
@@ -16,7 +23,10 @@ for row in csv_reader:
 
 inputFileName=sys.argv[1]
 inputFile=r.TFile(inputFileName, "read")
+inputFileNameNoExtension=sys.argv[1][inputFileName.find('adc'):inputFileName.find('.root')]
+outputFileName = outputPath+'LEDs_'+inputFileNameNoExtension
 allData=inputFile.Get('ntuplizehgcroc').Get("hgcroc") #
+
 
 IDpositions={}
 hists={}
@@ -29,7 +39,7 @@ for t in allData : #for timestamp in allData
         IDpositions[t.raw_id] = str(polarfire)+':'+str(hrocindex)+':'+str(channel)
     hists[t.raw_id].Fill(t.adc)
 
-csvfile = open('LEDs.csv', 'w', newline='')
+csvfile = open(outputFileName+'.csv', 'w', newline='')
 csvwriter = csv.writer(csvfile, delimiter=',')
 
 csvwriter.writerow(['DetID', 'ElLoc', 'ADC_PEDESTAL', 'LED_MEDIAN'])
@@ -43,11 +53,11 @@ for i in hists:
     LEDPlot.Fill(int(i),μ)
     csvwriter.writerow([i, IDpositions[i], pedestals[i], μ])
 
-file = r.TFile("pedestals.root", "RECREATE")
-pedestalPlot.SetDirectory(file)
-pedestalPlot.Write()
-file.Close()
-file = r.TFile("LEDs.root", "RECREATE")
+# file = r.TFile("pedestals.root", "RECREATE")
+# pedestalPlot.SetDirectory(file)
+# pedestalPlot.Write()
+# file.Close()
+file = r.TFile(outputFileName+".root", "RECREATE")
 LEDPlot.SetDirectory(file)
 LEDPlot.Write()
 file.Close()        
