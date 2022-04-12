@@ -23,11 +23,17 @@ csvfile = open('pedestals.csv', 'w', newline='')
 csvwriter = csv.writer(csvfile, delimiter=',')
 
 csvwriter.writerow(['DetID', 'ElLoc', 'ADC_PEDESTAL'])
+pedestalPlot = r.TH1F('','Pedestals',384,0,0)
+
 for i in hists: 
-    # fit = hists[i].Fit('gaus','Sq') #so fits are awful
-    # μ = fit.Parameter(1)
     μ = hists[i].GetMean()
+    pedestalPlot.Fill(int(i),μ)
     csvwriter.writerow([i, IDpositions[i], μ])
+
+file = r.TFile("pedestals.root", "RECREATE")
+pedestalPlot.SetDirectory(file)
+pedestalPlot.Write()
+file.Close()
 
         
 

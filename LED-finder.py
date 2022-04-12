@@ -34,14 +34,22 @@ csvwriter = csv.writer(csvfile, delimiter=',')
 
 csvwriter.writerow(['DetID', 'ElLoc', 'ADC_PEDESTAL', 'LED_MEDIAN'])
 
+pedestalPlot = r.TH1F('','Pedestals',384,0,0)
+LEDPlot = r.TH1F('','LEDs',384,0,0)
+
 for i in hists: 
-    # fit = hists[i].Fit('gaus','Sq') #so fits are awful
-    # μ = fit.Parameter(1)
     μ = hists[i].GetMean()-pedestals[i]
-    # print(i)
-    # print(type(i))
+    pedestalPlot.Fill(int(i),pedestals[i])
+    LEDPlot.Fill(int(i),μ)
     csvwriter.writerow([i, IDpositions[i], pedestals[i], μ])
 
-        
+file = r.TFile("pedestals.root", "RECREATE")
+pedestalPlot.SetDirectory(file)
+pedestalPlot.Write()
+file.Close()
+file = r.TFile("LEDs.root", "RECREATE")
+LEDPlot.SetDirectory(file)
+LEDPlot.Write()
+file.Close()        
 
  
