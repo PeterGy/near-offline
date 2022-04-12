@@ -27,7 +27,7 @@ options = parser.parse_args()[0]
 includeThresholdPlots=options.includeThresholdPlots
 
 #keeps only events we are interested in
-eventsOfInterest = range(0,100)
+eventsOfInterest = range(1,100)
 channelsOfInterest = range(0,40)
 
 inputFileName=sys.argv[1]
@@ -53,9 +53,10 @@ TOARange=range(0,1024)
 PERange=range(0,30)
 barMapRange=range(1,13)
 layerRange=range(1,41)
-thresholdCountMap = zeros((40,12))
-adcCountMap = zeros((40,12))
-adcSumMap = zeros((40,12))
+realLayerRange=range(1,21)
+thresholdCountMap = zeros((40,13))
+adcCountMap = zeros((40,13))
+adcSumMap = zeros((40,13))
 
 #sets the threshold
 threshold_PE = 5. #aribtrary for now
@@ -69,6 +70,9 @@ adc_ped = 1. #Dummy Value
 # print('threshold is an ADC of',threshold)
 def ADC_to_PE(adc): return adc*adc_gain/mV_per_PE 
 def calculateThreshold(adc_gain): return adc_ped + mV_per_PE / adc_gain * threshold_PE
+def ADC_to_E(adc): return adc*energy_per_mip/(2*mV_per_MIP)
+mV_per_MIP = 340 #varies per bar...
+#energy calculations
 
 thresholds=[]
 for row in csv_reader:
@@ -146,9 +150,18 @@ hists["thresholdMap"].SetYTitle('Bar')
 hists["thresholdMap"].SetXTitle('Layer') 
 
 
+for i in range(eventsOfInterest[0],eventsOfInterest[0]+12):
+    hists["eventDisplay"+str(i)] =  r.TH2F("eventDisplay"+str(i), "Edep map event "+str(i), 
+        len(realLayerRange), realLayerRange[0]-0.5, realLayerRange[-1]+0.5,
+        len(barMapRange), barMapRange[0]-0.5, barMapRange[-1]+0.5,)
+    hists["eventDisplay"+str(i)].SetYTitle('Bar')
+    hists["eventDisplay"+str(i)].SetXTitle('Layer') 
+
 #Gets data from interesting events
 maxADC=0
 maxSample=-1
+
+
 for t in allData : #for timestamp in allData
     if t.event in eventsOfInterest:
         realChannel = FpgaLinkChannel_to_realChannel([t.fpga,t.link,t.channel])
@@ -162,22 +175,32 @@ for t in allData : #for timestamp in allData
 
             #fills the map
             LayerBarSide = realChannel_to_SipM_fast[realChannel].copy() #the copy is what makes the fast not so fast
-            if LayerBarSide[2]==1: LayerBarSide[0] +=20
-            adcCountMap[LayerBarSide[0],LayerBarSide[1]] +=1 
-            adcSumMap[LayerBarSide[0],LayerBarSide[1]] +=t.adc   
+            if LayerBarSide[0] in range(0,10): visual_offset=3
+            else: visual_offset=1
+            if LayerBarSide[2]==1: visual_SiPM_offset=20
+            else: visual_SiPM_offset=0
+            
+
+            adcCountMap[LayerBarSide[0]+visual_SiPM_offset,LayerBarSide[1]+visual_offset] +=1 
+            adcSumMap[LayerBarSide[0]+visual_SiPM_offset,LayerBarSide[1]+visual_offset] +=t.adc   
+
 
 
             if maxADC<t.adc: 
                 maxADC=t.adc
                 maxSample=t.i_sample
             if t.i_sample == timestampRange[-1]: 
-                if maxADC>0: #future option for non-PE related threshold
-                    hists["event-of-max_sample"].Fill(maxSample)
-                    hists["max_sample-of-channel"].Fill(realChannel,maxSample)
+                # if maxADC>0: #future option for non-PE related threshold
+                hists["event-of-max_sample"].Fill(maxSample)
+                hists["max_sample-of-channel"].Fill(realChannel,maxSample)
+
+                if "eventDisplay"+str(t.event) in hists:
+                    hists["eventDisplay"+str(t.event)].Fill(LayerBarSide[0],LayerBarSide[1]+visual_offset,ADC_to_E(maxADC))
+
                 if maxADC>thresholds[realChannel]:   
                     hists["event-of-PE"].Fill(ADC_to_PE(maxADC))
                     hists["PE-of-channel"].Fill(realChannel,ADC_to_PE(maxADC))
-                    thresholdCountMap[LayerBarSide[0],LayerBarSide[1]] +=1 
+                    thresholdCountMap[LayerBarSide[0]+visual_SiPM_offset,LayerBarSide[1]+visual_offset] +=1 
                     
                 maxADC=0
                 maxSample=-1
@@ -186,15 +209,15 @@ for t in allData : #for timestamp in allData
 
 adcCountMap[adcCountMap == 0 ] = 1 
 for i in range(40):
-    for j in range(12):
-        if i in range(0,10) or i in range(20,30): visual_offset=2
-        else:visual_offset=0
+    for j in range(13):
+        # if i in range(0,10) or i in range(20,30): visual_offset=2
+        visual_offset=0
         # print()
-        hists["map"].Fill(i,j+1+visual_offset,adcSumMap[i,j]/adcCountMap[i,j])     
-        hists["thresholdMap"].Fill(i,j+1+visual_offset,thresholdCountMap[i,j])
+        hists["map"].Fill(i,j,adcSumMap[i,j]/adcCountMap[i,j])     
+        hists["thresholdMap"].Fill(i,j,thresholdCountMap[i,j])
 
 
-#makes pdf
+#overview page
 saveFileName="plots/Hcal-dqm_"+inputFileName[inputFileName.find('adc'):inputFileName.find('.root')]
 c = r.TCanvas('','', 300, 300)
 c.Divide(3,3)
@@ -228,9 +251,24 @@ label.DrawLatex(0,  0, context)
 c.Print(saveFileName+".pdf(","Title:Overview page");
 c.Close()
 
+#event display page
+c = r.TCanvas('','', 400, 300)
+c.Divide(4,3)
+
+for i in range(0,12):
+    c.cd(1+i)
+    hists["eventDisplay"+str(i+eventsOfInterest[0])].Draw('COLZ')
+label = addLabel()
+c.cd(0)
+label.DrawLatex(0,  0, "Odd layers: vertical bars; Even layers: horizontal bars")
+label.DrawLatex(0.45,  0.98, "Event display")
+c.SetTopMargin(0.12)
+c.Print(saveFileName+".pdf(","Title: Event display page");
+c.Close()
+
+#SiPM map page
 c = r.TCanvas('','', 200, 100)
 c.Divide(2,1)
-
 c.cd(1)
 hists["thresholdMap"].Draw('COLZ')
 c.cd(2)
@@ -242,7 +280,8 @@ label.DrawLatex(0,  0.04, "Odd layers: vertical bars; Even layers: horizontal ba
 c.Print(saveFileName+".pdf(","Title:Mappage");
 c.Close()
 
-#makes individual pdfs
+
+#per ROC pages
 import copy
 channelsPerROC=64
 plots=(hists["ADC-of-channel"],hists["TOT-of-channel"],hists["TOA-of-channel"],hists["max_sample-of-channel"])
