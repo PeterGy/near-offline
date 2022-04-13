@@ -6,8 +6,15 @@ from optparse import OptionParser
 import os
 import csv
 
+parser = OptionParser()	
+parser.add_option('-t','--threshold', dest='includeThresholdPlots', default = True, help='Determines if PE threshold plots should be included. Leave blank or True to inlcude, anything else ot exclude.')
+parser.add_option('-p','--pedestal', dest='pedestalFile', default = 'DumbReconConditions.csv', help='Determines the pedestals from provided file')
+options = parser.parse_args()[0]
+includeThresholdPlots = options.includeThresholdPlots
+pedestalFile = options.pedestalFile
+
 # csvFile=open()
-ReconConditionsFileLocation='DumbReconConditions.csv'
+ReconConditionsFileLocation = pedestalFile
 csv_reader = csv.reader(open(ReconConditionsFileLocation), delimiter=',')
 
 directory = 'plots'
@@ -21,10 +28,7 @@ def addLabel():
     label.SetNDC()
     return label
  
-parser = OptionParser()	
-parser.add_option('-t','--threshold', dest='includeThresholdPlots', default = True, help='Determines if PE threshold plots should be included. Leave blank or True to inlcude, anything else ot exclude.')
-options = parser.parse_args()[0]
-includeThresholdPlots=options.includeThresholdPlots
+
 
 #keeps only events we are interested in
 eventsOfInterest = range(1,100)
@@ -75,6 +79,7 @@ mV_per_MIP = 340 #varies per bar...
 #energy calculations
 
 thresholds=[]
+pedestals=[]
 for row in csv_reader:
     try:    
         [fpga,ROC,channel] = row[1].split(':') 
@@ -85,8 +90,10 @@ for row in csv_reader:
         RealChannel = FpgaLinkChannel_to_realChannel([fpga,link,channel])
     except: RealChannel = None
     if RealChannel != None: 
-        adc_gain = float(row[3])
+        adc_gain = 1.2#float(row[3]) 
+        pedestal = float(row[2])
         thresholds.append(calculateThreshold(adc_gain))
+        pedestals.append(pedestal)
 
 #prepares plots
 hists = {}
@@ -195,7 +202,9 @@ for t in allData : #for timestamp in allData
                 hists["max_sample-of-channel"].Fill(realChannel,maxSample)
 
                 if "eventDisplay"+str(t.event) in hists:
-                    hists["eventDisplay"+str(t.event)].Fill(LayerBarSide[0],LayerBarSide[1]+visual_offset,ADC_to_E(maxADC))
+                    if maxADC>pedestals[realChannel]+20 : #temporary arbitrary adc threshold for the event displays
+                        print(pedestals[realChannel]+20)
+                        hists["eventDisplay"+str(t.event)].Fill(LayerBarSide[0],LayerBarSide[1]+visual_offset,ADC_to_E(maxADC))
 
                 if maxADC>thresholds[realChannel]:   
                     hists["event-of-PE"].Fill(ADC_to_PE(maxADC))
