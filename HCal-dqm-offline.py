@@ -185,7 +185,7 @@ for t in allData : #for timestamp in allData
 
             #fills the map
             LayerBarSide = realChannel_to_SipM_fast[realChannel].copy() #the copy is what makes the fast not so fast
-            if LayerBarSide[0] in range(0,10): visual_offset=1
+            if LayerBarSide[0] in range(0,9): visual_offset=3
             else: visual_offset=1
             if LayerBarSide[2]==1: visual_SiPM_offset=20
             else: visual_SiPM_offset=0       
