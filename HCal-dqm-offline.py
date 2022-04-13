@@ -203,7 +203,6 @@ for t in allData : #for timestamp in allData
 
                 if "eventDisplay"+str(t.event) in hists:
                     if maxADC>pedestals[realChannel]+20 : #temporary arbitrary adc threshold for the event displays
-                        print(pedestals[realChannel]+20)
                         hists["eventDisplay"+str(t.event)].Fill(LayerBarSide[0],LayerBarSide[1]+visual_offset,ADC_to_E(maxADC))
 
                 if maxADC>thresholds[realChannel]:   
