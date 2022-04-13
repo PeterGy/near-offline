@@ -1,4 +1,4 @@
-#usage: ldmx python3 HCal-dqm-offline.py ../adc_<run-number>.root
+#usage: ldmx python3 HCal-dqm-offline.py adc_<run-number>.root
 #dqm = data quality monitoring
 
 from mapping import *
@@ -31,7 +31,7 @@ def addLabel():
 
 
 #keeps only events we are interested in
-eventsOfInterest = range(1,100)
+eventsOfInterest = range(12,100)
 channelsOfInterest = range(0,40)
 
 inputFileName=sys.argv[1]
@@ -95,6 +95,8 @@ for row in csv_reader:
         thresholds.append(calculateThreshold(adc_gain))
         pedestals.append(pedestal)
 
+# print(len(pedestals))
+# print(pedestals)
 #prepares plots
 hists = {}
 
@@ -158,7 +160,7 @@ hists["thresholdMap"].SetXTitle('Layer')
 
 
 for i in range(eventsOfInterest[0],eventsOfInterest[0]+12):
-    hists["eventDisplay"+str(i)] =  r.TH2F("eventDisplay"+str(i), "Edep map event "+str(i), 
+    hists["eventDisplay"+str(i)] =  r.TH2F("eventDisplay"+str(i), "(not yet accurate) Edep map event "+str(i), 
         len(realLayerRange), realLayerRange[0]-0.5, realLayerRange[-1]+0.5,
         len(barMapRange), barMapRange[0]-0.5, barMapRange[-1]+0.5,)
     hists["eventDisplay"+str(i)].SetYTitle('Bar')
@@ -172,6 +174,7 @@ maxSample=-1
 for t in allData : #for timestamp in allData
     if t.event in eventsOfInterest:
         realChannel = FpgaLinkChannel_to_realChannel([t.fpga,t.link,t.channel])
+        # print(([t.fpga,t.link,t.channel]))
         if realChannel != None: 
    
             hists["ADC-of-channel"].Fill(realChannel,t.adc)
@@ -182,16 +185,13 @@ for t in allData : #for timestamp in allData
 
             #fills the map
             LayerBarSide = realChannel_to_SipM_fast[realChannel].copy() #the copy is what makes the fast not so fast
-            if LayerBarSide[0] in range(0,10): visual_offset=3
+            if LayerBarSide[0] in range(0,10): visual_offset=1
             else: visual_offset=1
             if LayerBarSide[2]==1: visual_SiPM_offset=20
-            else: visual_SiPM_offset=0
-            
+            else: visual_SiPM_offset=0       
 
             adcCountMap[LayerBarSide[0]+visual_SiPM_offset,LayerBarSide[1]+visual_offset] +=1 
             adcSumMap[LayerBarSide[0]+visual_SiPM_offset,LayerBarSide[1]+visual_offset] +=t.adc   
-
-
 
             if maxADC<t.adc: 
                 maxADC=t.adc
@@ -202,8 +202,11 @@ for t in allData : #for timestamp in allData
                 hists["max_sample-of-channel"].Fill(realChannel,maxSample)
 
                 if "eventDisplay"+str(t.event) in hists:
+                    
                     if maxADC>pedestals[realChannel]+20 : #temporary arbitrary adc threshold for the event displays
                         hists["eventDisplay"+str(t.event)].Fill(LayerBarSide[0],LayerBarSide[1]+visual_offset,ADC_to_E(maxADC))
+                        # if t.event==14:
+                        #     print([t.fpga,t.link,t.channel])
 
                 if maxADC>thresholds[realChannel]:   
                     hists["event-of-PE"].Fill(ADC_to_PE(maxADC))
@@ -219,7 +222,6 @@ adcCountMap[adcCountMap == 0 ] = 1
 for i in range(40):
     for j in range(13):
         # if i in range(0,10) or i in range(20,30): visual_offset=2
-        visual_offset=0
         # print()
         hists["map"].Fill(i,j,adcSumMap[i,j]/adcCountMap[i,j])     
         hists["thresholdMap"].Fill(i,j,thresholdCountMap[i,j])
