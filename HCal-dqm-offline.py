@@ -17,7 +17,7 @@ pedestalFile = options.pedestalFile
 ReconConditionsFileLocation = pedestalFile
 csv_reader = csv.reader(open(ReconConditionsFileLocation), delimiter=',')
 
-directory = 'plots'
+directory = 'Plots'
 try: os.stat(directory)
 except: os.mkdir(directory)
 
