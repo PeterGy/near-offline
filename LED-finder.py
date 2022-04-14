@@ -32,10 +32,10 @@ IDpositions={}
 hists={}
 for t in allData : #for timestamp in allData
     if t.raw_id not in hists:
-        hists[t.raw_id] = r.TH1F(str(t.raw_id),'',1024,0,1204)
+        hists[t.raw_id] = r.TH1F(str(t.raw_id),'',1024,0,1024)
         polarfire= t.fpga
         hrocindex= int(t.link/2)
-        channel= 36*t.link%2 + t.channel
+        channel= 36*(t.link%2) + t.channel
         IDpositions[t.raw_id] = str(polarfire)+':'+str(hrocindex)+':'+str(channel)
     hists[t.raw_id].Fill(t.adc)
 
@@ -48,8 +48,13 @@ pedestalPlot = r.TH1F('','Pedestals',384,0,0)
 LEDPlot = r.TH1F('','LEDs',384,0,0)
 
 for i in hists: 
+    # μ = hists[i].GetMean()-pedestals[i]
+    # hists[i].SetRangeUser(int(pedestals[i]),1024)
     μ = hists[i].GetMean()-pedestals[i]
+
+
     pedestalPlot.Fill(int(i),pedestals[i])
+
     LEDPlot.Fill(int(i),μ)
     csvwriter.writerow([i, IDpositions[i], pedestals[i], μ])
 

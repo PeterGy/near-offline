@@ -23,10 +23,10 @@ IDpositions={}
 hists={}
 for t in allData : #for timestamp in allData
     if t.raw_id not in hists:
-        hists[t.raw_id] = r.TH1F(str(t.raw_id),'',1024,0,1204)
+        hists[t.raw_id] = r.TH1F(str(t.raw_id),'',1024,0,1024)
         polarfire= t.fpga
         hrocindex= int(t.link/2)
-        channel= 36*t.link%2 + t.channel
+        channel= 36*(t.link%2) + t.channel
         IDpositions[t.raw_id] = str(polarfire)+':'+str(hrocindex)+':'+str(channel)
     hists[t.raw_id].Fill(t.adc)
 
@@ -61,10 +61,10 @@ for i in hists:
     pedestalPlot.Fill(int(i),μ)
     csvwriter.writerow([i, IDpositions[i], μ])
 
-file = r.TFile(outputFileName+'.root', "RECREATE")
-pedestalPlot.SetDirectory(file)
-pedestalPlot.Write()
-file.Close()
+# file = r.TFile(outputFileName+'.root', "RECREATE")
+# pedestalPlot.SetDirectory(file)
+# pedestalPlot.Write()
+# file.Close()
 
         
 

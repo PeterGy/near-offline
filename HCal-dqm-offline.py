@@ -8,7 +8,7 @@ import csv
 
 parser = OptionParser()	
 parser.add_option('-t','--threshold', dest='includeThresholdPlots', default = True, help='Determines if PE threshold plots should be included. Leave blank or True to inlcude, anything else ot exclude.')
-parser.add_option('-p','--pedestal', dest='pedestalFile', default = 'DumbReconConditions.csv', help='Determines the pedestals from provided file')
+parser.add_option('-p','--pedestal', dest='pedestalFile', default = 'Pedestals/DumbReconConditions.csv', help='Determines the pedestals from provided file')
 options = parser.parse_args()[0]
 includeThresholdPlots = options.includeThresholdPlots
 pedestalFile = options.pedestalFile
@@ -204,9 +204,13 @@ for t in allData : #for timestamp in allData
                 if "eventDisplay"+str(t.event) in hists:
                     
                     if maxADC>pedestals[realChannel]+20 : #temporary arbitrary adc threshold for the event displays
-                        hists["eventDisplay"+str(t.event)].Fill(LayerBarSide[0],LayerBarSide[1]+visual_offset,ADC_to_E(maxADC))
-                        # if t.event==14:
-                        #     print([t.fpga,t.link,t.channel])
+                        # hists["eventDisplay"+str(t.event)].Fill(LayerBarSide[0],LayerBarSide[1]+visual_offset,ADC_to_E(maxADC))
+                        hists["eventDisplay"+str(t.event)].Fill(LayerBarSide[0],LayerBarSide[1]+visual_offset,maxADC)
+                        # if t.event==13:
+                        #     print('For channel:',[t.fpga,t.link,t.channel])
+                        #     print('Which is in:',LayerBarSide[0],LayerBarSide[1]+visual_offset)
+                        #     print('It records as',maxADC)
+                        #     print('With a pedestal of',pedestals[realChannel],)
 
                 if maxADC>thresholds[realChannel]:   
                     hists["event-of-PE"].Fill(ADC_to_PE(maxADC))

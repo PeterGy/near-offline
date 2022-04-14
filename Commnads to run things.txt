@@ -7,11 +7,8 @@ ls
 
 STEP 2: retrieve the nonsense
 
-scp ldmx@ldmxdaq-test:/u1/ldmx/data/pf_pedestal/ldmx_hcal_external_fpga_1_run_94_20220413_064120.raw ~/fpga_1_94.raw
-scp ldmx@ldmxdaq-test:/u1/ldmx/data/pf_pedestal/ldmx_hcal_external_fpga_0_run_94_20220413_064120.raw ~/94.raw
-scp ldmx@ldmxdaq-test:/u1/ldmx/data/pf_pedestal/ldmx_hcal_pedestal_fpga_1_run_240_20220413_071828.raw ~/fpga_1_pedestal_94.raw
-scp ldmx@ldmxdaq-test:/u1/ldmx/data/pf_pedestal/ldmx_hcal_pedestal_fpga_0_run240_20220413_072539.raw ~/fpga_0_pedestal_94.raw
-LDMX-TB-DAQ
+scp ldmx@ldmxdaq-test:/u1/ldmx/data/pf_pedestal/pedestal_20220414_072034.raw ~/fpga0_pedestals_112.raw
+scp ldmx@ldmxdaq-test:/u1/ldmx/data/pf_pedestal/led_DPM0_20220414_072047_dac_1650.raw ~/fpga0_LED_112.raw
 
 STEP 3: Download from place
 
@@ -19,20 +16,28 @@ STEP 3: Download from place
 
 STEP 4: Decode the nonsense
 
-ldmx fire decode.py Raws/fpga_0_pedestal_94.raw --keep_eids
-ldmx fire decode.py Raws/fpga_1_pedestal_94.raw --keep_eids
-ldmx fire decode.py Raws/94.raw --keep_eids
-ldmx fire decode.py Raws/fpga_1_94.raw --keep_eids
+ldmx fire decode.py Raws/fpga0_pedestals_112.raw --keep_eids
+ldmx fire decode.py Raws/fpga0_LED_112.raw --keep_eids
 
-STEP 5: Move the created garbage into Decoded folder
 
-STEP 6: Create pedestals
+STEP 5: Create pedestals
 
-ldmx python3 pedestal-finder.py Decoded/adc_fpga_0_pedestal_94.root Decoded/adc_fpga_1_pedestal_94.root -o Pedestals
+ldmx python3 pedestal-finder.py Decoded/adc_fpga0_pedestals_112.root -o Pedestals
 
-STEP 7: Run the DGM
+STEP 6: Create the LED file (y tho?)
 
-ldmx python3 HCal-dqm-offline.py Decoded/adc_94.root -p Pedestals/pedestals_adc_fpga_0_pedestal_94_adc_fpga_1_pedestal_94.csv
+ldmx python3 LED-finder.py Decoded/adc_fpga0_LED_112.root Pedestals/pedestals_adc_fpga0_pedestals_112_.csv
+
+STEP 7: Run the DQM
+
+ldmx python3 HCal-dqm-offline.py Decoded/adc_fpga0_LED_112.root -p Pedestals/pedestals_adc_fpga0_pedestals_112_.csv
+
+
+
+Nonsense commands
+
+
+ldmx python3 HCal-dqm-offline.py Decoded/adc_fpga_1_pedestal_94.root
+
 ldmx python3 HCal-dqm-offline.py Decoded/adc_fpga_1_94.root -p Pedestals/pedestals_adc_fpga_0_pedestal_94_adc_fpga_1_pedestal_94.csv
-
 
