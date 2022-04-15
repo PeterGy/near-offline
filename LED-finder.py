@@ -88,7 +88,7 @@ for i in range(0,6):
     pedestalPlots[i].Draw('HIST SAME')
     pedestalPlots[i].SetLineColor(3) 
 
-c.SaveAs("Plots/LEDsummary.pdf")
+c.SaveAs("Plots/LEDsummary_"+inputFileNameNoExtension+".pdf")
 c.Close()
 # file = r.TFile("pedestals.root", "RECREATE")
 # pedestalPlot.SetDirectory(file)
